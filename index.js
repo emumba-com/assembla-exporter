@@ -33,7 +33,7 @@ import downloadAttachmentsBySpace from './downloadAttachmentsBySpace'
         stayAwak.allow()
         logger.append(`Data backup completed in ${(Date.now() - startTimestamp) / 1000} seconds with ${getRequestCount()} requests`)
     } catch (e) {
-        console.error(e)
-        console.error(e.stack)
+        logger.append(e)
+        logger.append(e.stack)
     }
 })()
