@@ -3,10 +3,11 @@ import path from 'path'
 import stayAwak from 'stay-awake'
 
 // src
-import { ensureDirectory, writeFile, logger, getRequestCount } from './utils'
+import { ensureDirectory, writeFile, readFile, logger, getRequestCount } from './utils'
 import conf from './configuration'
 import requestData from './requestData'
 import downloadAttachmentsBySpace from './downloadAttachmentsBySpace'
+import flatten from './flatten'
 
 (async () => {
     try {
@@ -23,8 +24,10 @@ import downloadAttachmentsBySpace from './downloadAttachmentsBySpace'
             // create new directory for this space
             const dirSpace = await ensureDirectory(path.join(root, space.name))
 
+            const fileOutputJSON = conf.outputStructure === 'flat' ? flatten( space ) : space
+
             // write data space by space
-            await writeFile(path.join(dirSpace, 'backup.json'), JSON.stringify(space))
+            await writeFile(path.join(dirSpace, 'backup.json'), JSON.stringify(fileOutputJSON))
             
             // download attachments
             await downloadAttachmentsBySpace(space, dirSpace)
