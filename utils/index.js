@@ -33,7 +33,8 @@ export const track = async (name, fn, ...args) => {
 
 export const ensureDirectory = path =>
     new Promise((resolve, reject) => {
-        
+        // logger.append(`[ensureDirectory] ${path}`)
+
         mkdirp(path, err => {
             if ( err ) reject(err)
             
@@ -49,12 +50,35 @@ export const readFile = fileName =>
         })
     })
 
+export const readJSONFile = async filename => {
+    const body = await readFile(filename)
+    return JSON.parse(body)
+}
+
 export const writeFile = (fileName, data) =>
     new Promise((resolve, reject) => {
       fs.writeFile(path.resolve(fileName), data, 'utf8', (err) => {
           if (err) reject(err)
           else resolve(data)
       })
+    })
+
+export const writeJSONFile = (filename, data) => writeFile(filename, JSON.stringify(data))
+
+export const hasFile = filename =>
+    new Promise((resolve, reject) => {
+
+        // courtesy: https://stackoverflow.com/a/36594690/162461
+        fs.readFile(filename, 'utf8', function(err,data){
+            // the err variable substitutes for the fs.exists callback function variable
+            if (err) {
+                // do what you planned with the file
+                // console.log(data)
+                resolve(false)
+            }
+
+            resolve(true)
+        });
     })
 
 // courtesy: https://stackoverflow.com/a/3710226/162461
@@ -137,6 +161,7 @@ export const download = async (uri, filename) =>
 
 const __getReq__ = async (pURI, qs) => {
     const uri = `${conf.host}${pURI}.json`
+    // logger.append(`[__getReq__] GET ${uri}`)
     const response = await secureRequest(uri, {
         json: true,
         qs

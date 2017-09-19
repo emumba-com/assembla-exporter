@@ -18,8 +18,8 @@ import {
     URI_LIST_WIKI_PAGE_VERSIONS
 } from './constants'
 import { track, length, getReq, getReqP, logger } from './utils'
-import requestTicketData from './requestTicketData'
-import requestWikiPageData from './requestWikiPageData'
+import requestDataByTicket from './requestDataByTicket'
+import requestDataByWikiPage from './requestDataByWikiPage'
 
 const getSpaceTools     = ({ id }) => track('SpaceTools', getReq, URI_LIST_SPACE_TOOLS(id))
 const getUsers          = ({ id }) => track('Users', getReq, URI_LIST_USERS(id))
@@ -47,20 +47,32 @@ export default async space => {
     // output.documents      = await getDocuments(space)
     output.wikiPages      = await getWikiPages(space)
     
+    output.ticketComments = []
+    output.ticketTags = []
+    output.ticketAssociations = []
+    output.ticketAttachments = []
+
+    output.wikiPageVersions = []
+
     let i = 1
     let max = output.tickets.length
 
     for (let ticket of output.tickets) {
-        const data = await requestTicketData(space, ticket, i++, max)
-        Object.assign(ticket, data)
+        const { comments, tags, associations, attachments } = await requestDataByTicket(space, ticket, i++, max)
+        // Object.assign(ticket, data)
+        output.ticketComments.push( ...comments )
+        output.ticketTags.push( ...tags )
+        output.ticketAssociations.push( ...associations )
+        output.ticketAttachments.push( ...attachments )
     }
 
     i = 1
     max = output.wikiPages.length
 
     for (let page of output.wikiPages) {
-        const data = await requestWikiPageData(space, page, i++, max)
-        Object.assign(page, data)
+        const { versions } = await requestDataByWikiPage(space, page, i++, max)
+        // Object.assign(page, data)
+        output.wikiPageVersions.push( ...versions )
     }
 
     lineSpace.update(`[${space.name}] Resource download completed`)
