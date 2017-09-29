@@ -147,15 +147,16 @@ const handleLevelDataBlank = async (backup, state) => {
     // download all the data
     logger.append(`[${backup.space.name}][${state.level}] Downloading data ...`)
     let result
+    let nextBackup = backup
+    let nextState = state
 
     for await (result of requestDataBySpace( backup, state )) {
-        const { nextBackup, nextState } = result
+        nextBackup = result.nextBackup
+        nextState = result.nextState
 
         await persistBackupObject( nextBackup )
         await persistStateObject( nextBackup, nextState )
     }
-
-    const { nextBackup, nextState } = result
 
     return await transit(nextBackup, {...nextState, level: LEVEL_DATA_FULL})
 }

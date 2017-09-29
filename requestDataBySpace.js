@@ -245,6 +245,9 @@ export default async function* (backup, state) {
     yield *downloadEntitiesC('wikiPages', URI_LIST_WIKI_PAGES(space.id), {
         multiPage: true
     })
+    yield *downloadEntitiesC('documents', URI_LIST_DOCUMENTS(space.id), {
+        multiPage: true
+    })
 
     yield *downloadEntitiesC('ticketComments', (nextBackup, ticket) => URI_LIST_TICKET_COMMENTS(space.id, ticket.number), {
         multiPage: true,
