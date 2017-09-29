@@ -197,30 +197,13 @@ const __getReqP__ = async (
     let body
 
     do {
-        // console.log(`[${Date.now()}] Downloading page ${page}:`)
         const response = await __getReq__(uri, { ...options, [KEY_PAGE]: page })
         statusCode = response.statusCode
         body = response.body
         
-        // console.log(`[${Date.now()}] ${response && response.length}/${output.length}`)
-        // console.log('res: ', res.statusCode)
-
         if ( body ) {
             output = output.concat(body)
-            // console.log(response)
-
-            /*
-            body.forEach(item => {
-                if ( !map[item.id] ) {
-                    map[item.id] = 0
-                }
-
-                map[item.id]++
-            })
-            */
         }
-
-        // console.log(`map for ${uri}[${page}]: `, Object.keys(map).length)
 
         page++
     } while ( statusCode === 200 )
@@ -231,4 +214,35 @@ const __getReqP__ = async (
 export const getReqP = async (uri, externalOptions) => {
     const response = await __getReqP__(uri, externalOptions)
     return response.body
+}
+
+export async function *getReqGP(uri, externalOptions = {}) {
+    // const line = logger.append(`[getReqGP] GET ${uri}`)
+
+    const options = {
+        [KEY_PAGE]: 1,
+        [KEY_PER_PAGE]: 10,
+        ...externalOptions
+    }
+
+    // dupchecks
+    // const map = {}
+
+    // let response
+    let page = options[KEY_PAGE]
+    let statusCode = 200
+
+    do {
+        const response = await __getReq__(uri, { ...options, [KEY_PAGE]: page })
+        statusCode = response.statusCode
+        const { body: items } = response
+
+        // line.update(`[getReqGP] GET ${uri} -- ${statusCode} -- page: ${page} -- items: ${items && items.length}`)
+        
+        if ( items ) {
+            yield { items, page }
+        }
+
+        page++
+    } while ( statusCode === 200 )
 }

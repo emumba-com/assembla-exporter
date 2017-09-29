@@ -16,6 +16,88 @@ const LEVEL_ATTACHMENTS_PARTIAL = 'LEVEL_ATTACHMENTS_PARTIAL'
 const LEVEL_ATTACHMENTS_FULL    = 'LEVEL_ATTACHMENTS_FULL'
 const LEVEL_COMPLETE            = 'LEVEL_COMPLETE'
 
+const entities = [
+    'space',
+    'spaceTools',
+    'users',
+    'tickets',
+    'milestones',
+    'ticketStatuses',
+    'tags',
+    'customFields',
+    'userRoles',
+    'documents',
+    'wikiPages',
+    'ticketComments',
+    'ticketTags',
+    'ticketAssociations',
+    'ticketAttachments',
+    'wikiPageVersions'
+]
+
+const getDefaultState = () => ({
+    level: LEVEL_INIT,
+    entities: {
+        spaceTools: {
+            status: 'waiting'
+        },
+        users: {
+            status: 'waiting'
+        },
+        tickets: {
+            status: 'waiting',
+            page: 1
+        },
+        milestones: {
+            status: 'waiting',
+            page: 1
+        },
+        ticketStatuses: {
+            status: 'waiting'
+        },
+        tags: {
+            status: 'waiting',
+            page: 1
+        },
+        customFields: {
+            status: 'waiting'
+        },
+        userRoles: {
+            status: 'waiting'
+        },
+        documents: {
+            status: 'waiting',
+            page: 1
+        },
+        wikiPages: {
+            status: 'waiting',
+            page: 1
+        },
+        ticketComments: {
+            status: 'waiting',
+            parentIndex: 0,
+            page: 1
+        },
+        ticketTags: {
+            status: 'waiting',
+            parentIndex: 0
+        },
+        ticketAssociations: {
+            status: 'waiting',
+            parentIndex: 0
+        },
+        ticketAttachments: {
+            status: 'waiting',
+            parentIndex: 0
+        },
+        wikiPageVersions: {
+            status: 'waiting',
+            parentIndex: 0,
+            page: 1
+        }
+    }
+})
+
 const getStateFilename = space => path.join(conf.outputDirectory, space.name, 'state.json')
 const getBackupFilename = space => path.join(conf.outputDirectory, space.name, 'backup.json')
 
@@ -28,7 +110,9 @@ const getBackupObject = async space => {
 
 const getStateObject = async space => {
     const filename = getStateFilename(space)
-    const state = await hasFile( filename ) ? await readJSONFile( filename ) : { level: LEVEL_INIT }
+    const state = await hasFile( filename )
+        ? await readJSONFile( filename )
+        : getDefaultState()
 
     return state
 }
@@ -62,15 +146,18 @@ const handleLevelInit = async (backup, state) => {
 const handleLevelDataBlank = async (backup, state) => {
     // download all the data
     logger.append(`[${backup.space.name}][${state.level}] Downloading data ...`)
+    let result
 
-    const dataBySpace = await requestDataBySpace( backup.space )
-    const nextBackup = {
-        ...backup,
-        ...dataBySpace
+    for await (result of requestDataBySpace( backup, state )) {
+        const { nextBackup, nextState } = result
+
+        await persistBackupObject( nextBackup )
+        await persistStateObject( nextBackup, nextState )
     }
-    await persistBackupObject(nextBackup)
 
-    return await transit(nextBackup, {...state, level: LEVEL_DATA_FULL})
+    const { nextBackup, nextState } = result
+
+    return await transit(nextBackup, {...nextState, level: LEVEL_DATA_FULL})
 }
 
 const handleLevelDataPartial = handleLevelDataBlank

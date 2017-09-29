@@ -19,15 +19,20 @@ export default async backup => {
     
     let i = 0
 
+    const line = logger.append(`[${space.name}][downloadAttachments][Attachment ${i}/${attachments.length}] Downloading ...`)
+
     for ( let attachment of attachments ) {
-        const line = logger.append(`[Attachment ${++i}/${attachments.length}] Downloading ...`)
         const filename = `__TicketID ${attachment.ticket_id}__${attachment.filename}`
 
         if ( await hasFile(path.join(dirAttachments, filename)) ) {
-            line.update(`[Attachment ${i}/${attachments.length}] Already downloaded`)
+            // line.update(`[Attachment ${i}/${attachments.length}] Already downloaded`)
         } else {
             await download( attachment.url, path.join(dirAttachments, filename) )
-            line.update(`[Attachment ${i}/${attachments.length}] Downloaded`)
+            // line.update(`[Attachment ${i}/${attachments.length}] Downloaded`)
         }
+
+        line.update(`[${space.name}][downloadAttachments][Attachment ${++i}/${attachments.length}] Downloading ...`)
     }
+
+    line.update(`[${space.name}][downloadAttachments] Downloaded [count=${i}]`)
 }
